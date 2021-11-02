@@ -19,16 +19,41 @@ namespace uow.playground.tests
 
 			Assert.False(dbContext.Disposed);
 
+			IEntityService entityService = container.Resolve<IEntityService>();
+
 			container.Dispose();
 
 			Assert.True(dbContext.Disposed);
+		}
+
+		[Fact]
+		public void Lifetime_Hierarchical()
+		{
+			IUnityContainer container = WireUp();
+
+			DbContext mainDbContext = container.Resolve<DbContext>();
+
+			IUnityContainer childContainer = container.CreateChildContainer();
+			{
+				DbContext childDbContext = childContainer.Resolve<DbContext>();
+
+				Assert.False(childDbContext.Disposed);
+
+				IEntityService entityService = container.Resolve<IEntityService>();
+
+				childContainer.Dispose();
+
+				Assert.True(childDbContext.Disposed);
+			}
+
+			Assert.False(mainDbContext.Disposed);
 		}
 
 		private IUnityContainer WireUp()
 		{
 			IUnityContainer container = new UnityContainer();
 
-			container.RegisterType<DbContext>(new ContainerControlledLifetimeManager());
+			container.RegisterType<DbContext>(new HierarchicalLifetimeManager());
 			container.RegisterType<IUnityOfWork, UnityOfWork>();
 			container.RegisterType<IEntityRepository, EntityRepository>();
 			container.RegisterType<IDependencyRepository, DependencyRepository>();
