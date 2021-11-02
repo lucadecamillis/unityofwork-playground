@@ -33,19 +33,17 @@ namespace uow.playground.tests
 
 			DbContext mainDbContext = container.Resolve<DbContext>();
 
-			IUnityContainer childContainer = container.CreateChildContainer();
+			DbContext childDbContext;
+			using(IUnityContainer childContainer = container.CreateChildContainer())
 			{
-				DbContext childDbContext = childContainer.Resolve<DbContext>();
-
-				Assert.False(childDbContext.Disposed);
+				childDbContext = childContainer.Resolve<DbContext>();
 
 				IEntityService entityService = container.Resolve<IEntityService>();
 
-				childContainer.Dispose();
-
-				Assert.True(childDbContext.Disposed);
+				Assert.False(childDbContext.Disposed);
 			}
 
+			Assert.True(childDbContext.Disposed);
 			Assert.False(mainDbContext.Disposed);
 		}
 
